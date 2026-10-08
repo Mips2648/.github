@@ -36,6 +36,9 @@ jobs:
         with:
           php-version: '8.2'
           tools: composer:v2
+      - name: Install Jeedom core dependencies
+        working-directory: jeedom/core
+        run: composer install --no-dev --no-interaction --prefer-dist --no-progress
       - name: Install dependencies
         working-directory: mips2648/plugin
         run: |
@@ -58,7 +61,7 @@ jobs:
         working-directory: mips2648/plugin
         run: |
           if [ -x vendor/bin/phpstan ]; then
-            vendor/bin/phpstan analyse --no-progress
+            vendor/bin/phpstan analyse --no-progress --autoload-file="$GITHUB_WORKSPACE/jeedom/core/vendor/autoload.php"
           else
-            "$GITHUB_WORKSPACE/.workflow-config/tools/phpstan/vendor/bin/phpstan" analyse --no-progress
+            "$GITHUB_WORKSPACE/.workflow-config/tools/phpstan/vendor/bin/phpstan" analyse --no-progress --autoload-file="$GITHUB_WORKSPACE/jeedom/core/vendor/autoload.php"
           fi
