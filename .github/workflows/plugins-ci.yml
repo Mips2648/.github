@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  workflow_call:
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: PHP Syntax Checker (Lint)
+        uses: StephaneBour/actions-php-lint@8.4
+        with:
+          dir: '.'
+
+  phpstan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v7
+        with:
+          path: mips2648/plugin
+      - name: Checkout Jeedom core
+        uses: actions/checkout@v7
+        with:
+          repository: jeedom/core
+          path: jeedom/core
+      - name: Checkout shared PHPStan configuration
+        uses: actions/checkout@v7
+        with:
+          repository: Mips2648/.workflow
+          ref: main
+          path: .workflow-config
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+      - name: Install dependencies
+        working-directory: mips2648/plugin
+        run: |
+          if [ -f composer.json ]; then
+            composer install --no-interaction --prefer-dist --no-progress
+          fi
+      - name: Install PHPStan
+        working-directory: .workflow-config/tools/phpstan
+        run: |
+          if [ ! -x "$GITHUB_WORKSPACE/mips2648/plugin/vendor/bin/phpstan" ]; then
+            composer install --no-interaction --prefer-dist --no-progress
+          fi
+      - name: Use shared PHPStan configuration when needed
+        working-directory: mips2648/plugin
+        run: |
+          if [ ! -f phpstan.neon ] && [ ! -f phpstan.neon.dist ]; then
+            cp "$GITHUB_WORKSPACE/.workflow-config/tools/phpstan/phpstan.neon" phpstan.neon
+          fi
+      - name: PHPStan
+        working-directory: mips2648/plugin
+        run: |
+          if [ -x vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyse --no-progress
+          else
+            "$GITHUB_WORKSPACE/.workflow-config/tools/phpstan/vendor/bin/phpstan" analyse --no-progress
+          fi

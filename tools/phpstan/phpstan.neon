@@ -1,0 +1,13 @@
+parameters:
+    level: 3
+
+    paths:
+        - core
+        - desktop
+        - plugin_info
+
+    scanDirectories:
+        - ../../jeedom/core/core/
+
+    excludePaths:
+        - vendor/*
